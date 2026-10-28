@@ -1,0 +1,77 @@
+# ---------- Dependencies ----------
+node_modules/
+.pnp
+.pnp.js
+.yarn/
+.npm/
+.pnpm-store/
+
+# ---------- Build output ----------
+dist/
+build/
+out/
+.next/
+.vite/
+*.tsbuildinfo
+coverage/
+.nyc_output/
+*.vsix
+.vscode-test/
+
+# ---------- Environment and secrets ----------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+secrets/
+service-account*.json
+
+# ---------- Logs ----------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---------- Python (analysis worker) ----------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# ---------- Local data and caches ----------
+*.sqlite
+*.sqlite3
+.cache/
+tmp/
+temp/
+repo-clones/
+analysis-output/
+dump/
+mongodata/
+
+# ---------- Editors and OS ----------
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ---------- Deployment tooling ----------
+.vercel/
+.netlify/
+.render/
+.wrangler/

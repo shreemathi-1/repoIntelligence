@@ -1,0 +1,45 @@
+{
+  "name": "repointelligence",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Discover, understand and evaluate GitHub repositories.",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "prepare": "husky",
+    "build:shared": "npm run build -w @repointelligence/shared",
+    "lint": "npm run build:shared && eslint . --max-warnings 0",
+    "typecheck": "npm run build:shared && npm run typecheck --workspaces --if-present",
+    "test": "npm run build:shared && npm test --workspaces --if-present",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "dev": "npm run build:shared && concurrently -n api,web -c blue,green \"npm run dev -w @repointelligence/api\" \"npm run dev -w @repointelligence/web\"",
+    "job:trending": "npm run job:trending -w @repointelligence/api",
+    "dev:worker": "cd services/worker && .venv/bin/uvicorn app.main:app --reload --port 8000",
+    "lint:worker": "cd services/worker && .venv/bin/ruff check . && .venv/bin/ruff format --check . && .venv/bin/mypy app",
+    "test:worker": "cd services/worker && .venv/bin/pytest -q"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "@eslint/js": "^10.0.1",
+    "concurrently": "^10.0.6",
+    "eslint": "^10.13.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.10",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^5.0.5"
+  }
+}
