@@ -15,6 +15,13 @@ export const testConfig: Config = {
   LOG_LEVEL: 'silent',
   GITHUB_TOKEN: undefined,
   TRENDING_JOB_ENABLED: false,
+  GEMINI_API_KEY: undefined,
+  GROQ_API_KEY: undefined,
+  CEREBRAS_API_KEY: undefined,
+  OPENROUTER_API_KEY: undefined,
+  MISTRAL_API_KEY: undefined,
+  OLLAMA_URL: undefined,
+  VECTOR_SEARCH_ENABLED: false,
   TRUST_PROXY: false,
 };
 

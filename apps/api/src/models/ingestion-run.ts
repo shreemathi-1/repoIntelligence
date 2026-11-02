@@ -1,6 +1,19 @@
 import { Schema, model, type InferSchemaType } from 'mongoose';
 
 export const INGESTION_STATUSES = ['running', 'completed', 'partial', 'failed'] as const;
+export const EMBEDDING_STATUSES = ['none', 'queued', 'running', 'ready', 'failed'] as const;
+
+// Progress of the vector index built from this run's chunks, for repository chat.
+const embeddingSchema = new Schema(
+  {
+    status: { type: String, enum: EMBEDDING_STATUSES, required: true, default: 'none' },
+    embedded: { type: Number, required: true, default: 0 },
+    model: { type: String },
+    error: { type: String },
+    updatedAt: { type: Date },
+  },
+  { _id: false },
+);
 
 // One row per repository and commit, so ingesting the same commit twice is a lookup.
 const ingestionRunSchema = new Schema(
@@ -16,8 +29,9 @@ const ingestionRunSchema = new Schema(
     error: { type: String },
     startedAt: { type: Date, required: true },
     completedAt: { type: Date },
+    embedding: { type: embeddingSchema, default: () => ({}) },
   },
-  { timestamps: true },
+  { timestamps: true, minimize: false },
 );
 
 ingestionRunSchema.index({ fullName: 1, sha: 1 }, { unique: true });

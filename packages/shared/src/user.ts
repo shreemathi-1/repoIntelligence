@@ -5,6 +5,8 @@ export const preferencesSchema = z.object({
   defaultLanguage: z.string().min(1).max(50).optional(),
   // Opting in means the next login asks GitHub for the broader `repo` scope.
   privateRepoAccess: z.boolean(),
+  // Lets repository chat send private repository content to providers that do not train on it.
+  allowPrivateRepoLlm: z.boolean(),
 });
 
 export type Preferences = z.infer<typeof preferencesSchema>;

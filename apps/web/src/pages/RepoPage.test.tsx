@@ -51,7 +51,7 @@ const run = (over: Record<string, unknown> = {}) => ({
 const user = {
   id: 'u1',
   login: 'octocat',
-  preferences: { theme: 'system', privateRepoAccess: false },
+  preferences: { theme: 'system', privateRepoAccess: false, allowPrivateRepoLlm: false },
   privateRepoScope: false,
 };
 

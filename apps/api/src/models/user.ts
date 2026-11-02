@@ -5,6 +5,7 @@ const preferencesSchema = new Schema(
     theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
     defaultLanguage: { type: String, maxlength: 50 },
     privateRepoAccess: { type: Boolean, default: false },
+    allowPrivateRepoLlm: { type: Boolean, default: false },
   },
   { _id: false },
 );

@@ -22,6 +22,7 @@
     "format:check": "prettier --check .",
     "dev": "npm run build:shared && concurrently -n api,web -c blue,green \"npm run dev -w @repointelligence/api\" \"npm run dev -w @repointelligence/web\"",
     "job:trending": "npm run job:trending -w @repointelligence/api",
+    "eval:llm": "npm run eval:llm -w @repointelligence/api --",
     "dev:worker": "cd services/worker && .venv/bin/uvicorn app.main:app --reload --port 8000",
     "lint:worker": "cd services/worker && .venv/bin/ruff check . && .venv/bin/ruff format --check . && .venv/bin/mypy app",
     "test:worker": "cd services/worker && .venv/bin/pytest -q"

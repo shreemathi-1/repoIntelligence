@@ -17,25 +17,33 @@ describe('models', () => {
   });
 
   it('defaults AnalysisRun to queued and rejects an unknown status', async () => {
-    const repo = await Repository.create({ owner: 'a', name: 'b', fullName: 'a/b' });
-    const run = await AnalysisRun.create({ repository: repo._id });
+    const user = await User.create({ githubId: 9, login: 'runner' });
+    const run = await AnalysisRun.create({ fullName: 'A/B', requestedBy: user._id });
     expect(run.status).toBe('queued');
+    expect(run.fullName).toBe('a/b');
+    expect(run.progress.step).toBe('queued');
     await expect(
-      AnalysisRun.create({ repository: repo._id, status: 'weird' as 'queued' }),
+      AnalysisRun.create({ fullName: 'a/b', requestedBy: user._id, status: 'weird' as 'queued' }),
     ).rejects.toThrow(/validation/i);
   });
 
   it('stores chat messages with citations', async () => {
     const user = await User.create({ githubId: 2, login: 'u2' });
-    const repo = await Repository.create({ owner: 'c', name: 'd', fullName: 'c/d' });
     const session = await ChatSession.create({
       user: user._id,
-      repository: repo._id,
+      fullName: 'c/d',
+      sha: 'a'.repeat(40),
       messages: [
-        { role: 'assistant', content: 'See the entry point', citations: [{ path: 'src/a.ts' }] },
+        {
+          role: 'assistant',
+          content: 'See the entry point',
+          citations: [{ path: 'src/a.ts', startLine: 1, endLine: 4 }],
+          confidence: 'verified',
+        },
       ],
     });
     expect(session.messages[0]?.citations[0]?.path).toBe('src/a.ts');
+    expect(session.messages[0]?.confidence).toBe('verified');
   });
 
   it('keeps Collection names unique per user', async () => {

@@ -3,6 +3,7 @@ import { vi } from 'vitest';
 import type { Config } from '../src/config.js';
 import { createApp } from '../src/app.js';
 import type { GithubService } from '../src/github/service.js';
+import type { AppDeps } from '../src/routes/index.js';
 import { createLogger } from '../src/logger.js';
 import { authTestConfig } from './env.js';
 import { jsonResponse } from './github-fixtures.js';
@@ -20,9 +21,9 @@ function urlOf(input: Parameters<typeof fetch>[0]): string {
  */
 export function oauthFetch(
   githubId: number,
-  api: (url: string) => Response | undefined,
+  api: (url: string, init?: RequestInit) => Response | undefined,
 ): ReturnType<typeof vi.fn<typeof fetch>> {
-  return vi.fn<typeof fetch>((input) => {
+  return vi.fn<typeof fetch>((input, init) => {
     const url = urlOf(input);
     if (url.includes('login/oauth/access_token')) {
       return Promise.resolve(jsonResponse({ access_token: TOKEN, scope: 'read:user' }));
@@ -31,23 +32,26 @@ export function oauthFetch(
       return Promise.resolve(jsonResponse({ id: githubId, login: `user${githubId}` }));
     }
     return Promise.resolve(
-      api(decodeURIComponent(url)) ?? jsonResponse({ message: 'Not Found' }, 404),
+      api(decodeURIComponent(url), init) ?? jsonResponse({ message: 'Not Found' }, 404),
     );
   });
 }
 
 export async function signInWith(options: {
   githubId?: number;
-  api: (url: string) => Response | undefined;
+  api: (url: string, init?: RequestInit) => Response | undefined;
   /** Builds the GitHub service around the same fetch the OAuth hops use. */
   makeGithub?: (fetchImpl: typeof fetch) => GithubService;
   config?: Config;
+  /** Anything else createApp should receive. */
+  extraDeps?: Omit<AppDeps, 'fetch' | 'github'>;
 }) {
   const fetchMock = oauthFetch(options.githubId ?? 1, options.api);
   const config = options.config ?? authTestConfig;
   const app = createApp(config, createLogger(config), {
     fetch: fetchMock,
     ...(options.makeGithub && { github: options.makeGithub(fetchMock) }),
+    ...options.extraDeps,
   });
   const agent = request.agent(app);
   const login = await agent.get('/api/v1/auth/github/login');

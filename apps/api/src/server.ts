@@ -1,6 +1,7 @@
 import { createApp } from './app.js';
 import { ConfigError, loadConfig } from './config.js';
 import { connectDb, disconnectDb } from './db.js';
+import { AnalysisQueue } from './analysis/queue.js';
 import { runTrendingJob } from './discovery/trending-job.js';
 import { GithubService } from './github/service.js';
 import { startDailyJob } from './jobs/scheduler.js';
@@ -23,7 +24,18 @@ async function main(): Promise<void> {
       )
     : undefined;
 
-  const server = createApp(config, logger, { github }).listen(config.PORT, () => {
+  let analysisQueue: AnalysisQueue | undefined;
+  const app = createApp(config, logger, {
+    github,
+    queue: (handler) => {
+      analysisQueue = new AnalysisQueue({ mongoUri: config.MONGODB_URI, logger }, handler);
+      return analysisQueue;
+    },
+  });
+  await analysisQueue?.start();
+  logger.info('analysis queue started');
+
+  const server = app.listen(config.PORT, () => {
     logger.info({ port: config.PORT }, 'api listening');
   });
 
@@ -33,6 +45,9 @@ async function main(): Promise<void> {
     shuttingDown = true;
     logger.info({ signal }, 'shutting down');
     stopJobs?.();
+    analysisQueue?.stop().catch((e: unknown) => {
+      logger.error({ err: e }, 'error stopping the analysis queue');
+    });
 
     const force = setTimeout(() => {
       logger.error('shutdown timed out, exiting');

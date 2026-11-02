@@ -38,6 +38,19 @@ const envObject = z.object({
     .enum(['true', 'false'])
     .default('false')
     .transform((value) => value === 'true'),
+  // Model providers. Any subset works; the gateway routes around the missing ones.
+  GEMINI_API_KEY: optional(z.string().min(1)),
+  GROQ_API_KEY: optional(z.string().min(1)),
+  CEREBRAS_API_KEY: optional(z.string().min(1)),
+  OPENROUTER_API_KEY: optional(z.string().min(1)),
+  MISTRAL_API_KEY: optional(z.string().min(1)),
+  // A local OpenAI-compatible server, for example http://localhost:11434/v1.
+  OLLAMA_URL: optional(z.url()),
+  // Use the Atlas Vector Search index instead of scoring vectors in memory.
+  VECTOR_SEARCH_ENABLED: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((value) => value === 'true'),
   TRUST_PROXY: z
     .enum(['true', 'false'])
     .default('false')

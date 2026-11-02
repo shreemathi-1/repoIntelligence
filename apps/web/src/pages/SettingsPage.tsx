@@ -57,6 +57,23 @@ export function SettingsPage() {
             />
             Allow access to my private repositories
           </label>
+          <label className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={preferences.allowPrivateRepoLlm}
+              onChange={(event) => {
+                update.mutate({ allowPrivateRepoLlm: event.target.checked });
+              }}
+            />
+            <span>
+              Let repository chat send private repository content to model providers.
+              <span className="text-muted-foreground block">
+                Only providers that do not train on inputs are used for private content; free tiers
+                that may train on it are skipped.
+              </span>
+            </span>
+          </label>
           {needsReauth && (
             <p className="text-muted-foreground">
               GitHub has not granted private access yet.{' '}

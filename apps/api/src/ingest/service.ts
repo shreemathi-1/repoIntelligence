@@ -8,6 +8,7 @@ import {
 import { AppError } from '../errors.js';
 import type { GithubService, Viewer } from '../github/service.js';
 import { Artifact, type ARTIFACT_KINDS } from '../models/artifact.js';
+import { ChunkEmbedding } from '../models/chunk-embedding.js';
 import { IngestionRun } from '../models/ingestion-run.js';
 import {
   chunkEnv,
@@ -182,7 +183,11 @@ export class IngestionService {
       if (fresh || busy) return { run: existing, reused: true };
     }
 
-    if (existing) await Artifact.deleteMany({ run: existing._id });
+    if (existing) {
+      await Artifact.deleteMany({ run: existing._id });
+      // Chunk ids can change with the chunker, so stale vectors go with the old chunks.
+      await ChunkEmbedding.deleteMany({ fullName, sha: commit.sha });
+    }
     const startedAt = new Date(this.now());
     const run = await IngestionRun.findOneAndUpdate(
       { fullName, sha: commit.sha },
@@ -193,6 +198,7 @@ export class IngestionService {
           private: commit.private,
           status: 'running',
           startedAt,
+          embedding: { status: 'none', embedded: 0 },
         },
         $unset: { stats: '', error: '', completedAt: '' },
       },

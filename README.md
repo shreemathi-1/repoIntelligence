@@ -57,11 +57,81 @@ file, 20 MB in total and about 60 seconds; a result that hits one is marked part
 (Markdown, JSON, plain text, and a token-budgeted context bundle) are downloads from
 `/api/v1/repos/:owner/:name/ingestions/:sha/export`. Repository text is always treated as data.
 
+## Health score
+
+Signed-in users can analyse a public repository from its page. The API queues a job (Mongo-backed,
+one at a time, three attempts), downloads the commit's tarball, sends it to the worker, and
+collects activity, community and CI signals from GitHub. The worker runs whichever scanners are
+installed: Lizard (complexity), jscpd (duplication), Ruff (Python lint), Semgrep (static
+analysis), Gitleaks (secrets) and OSV-Scanner (known vulnerabilities), plus an inventory of
+files that needs no tool. A scanner that is missing marks its metrics unavailable; it never
+reads as a clean result. Every score stores its formula, weights, per-metric evidence and a
+measured / inferred / unavailable label, and the dashboard can estimate what resolving chosen
+findings would change. Limits: 5 analyses per user per day, one running at a time, archives up
+to 50 MB.
+
+Lizard and Ruff install with the worker's requirements. The others are optional:
+
+```sh
+brew install gitleaks osv-scanner        # or the release binaries from GitHub
+npm install -g jscpd
+services/worker/.venv/bin/pip install semgrep
+```
+
+## Architecture map
+
+Signed-in users can map a public repository from its page. The worker parses JavaScript,
+TypeScript, Python and Java with tree-sitter and returns import and symbol graphs, call and
+inheritance edges, entry points, HTTP routes (Express, NestJS, FastAPI, Flask, Django, Spring),
+data models and migrations (Mongoose, Prisma, SQLAlchemy, Django, JPA, Flyway), authentication
+touchpoints, the tech stack, architecture layers, layer violations and import cycles. All of it
+is pattern based and labelled as detected, with the file and line it came from. The page shows
+module, file and symbol graphs, a folder explorer, routes with a request trace, data and auth
+panels, a source viewer pinned to the commit, Mermaid exports and a comparison between two mapped
+commits. A stored graph also fills the architecture area of the health score. Limits: 3,000
+source files and 1 MB per file; larger repositories are mapped partially and say so.
+
+## Repository chat
+
+Signed-in users can ask questions about an ingested repository. Each session is pinned to the
+ingested commit. Retrieval combines keyword search over the ingested chunks with vector search
+over embeddings that the worker computes locally (`BAAI/bge-small-en-v1.5`, nothing leaves the
+worker), merged by reciprocal rank. Names of routes, models and symbols from the architecture map
+are used to sharpen the search.
+
+Every answer cites `path:lines`. Citations are checked against the chunks the model was shown;
+invented ones are removed and the answer is labelled **Cited**, **Partly supported** or **No
+evidence**. When nothing relevant is found no model is called and the reply says so. Repository
+text only ever reaches a model inside delimited data blocks, with an instruction to treat it as
+data, and secret values are redacted on the way in and on the way out. Sessions can be exported as
+Markdown, and any range of up to 120 lines can be explained line by line.
+
+Models are reached through one gateway (`apps/api/src/llm`). Model IDs, task routing and
+free-tier limits live only in `models.config.ts`. Set any of `GEMINI_API_KEY`, `GROQ_API_KEY`,
+`CEREBRAS_API_KEY`, `OPENROUTER_API_KEY`, `MISTRAL_API_KEY` or `OLLAMA_URL`; the gateway keeps
+each provider inside its per-minute budget, retries outages with backoff and fails over to the
+next model when one is rate limited. Every call's tokens are recorded; `GET /api/v1/me/llm-usage`
+shows today's totals. Each user can ask 50 questions a day.
+
+Private repositories are off by default. With the Settings opt-in, their content is routed only
+to providers that do not train on inputs (Groq, Cerebras, a local Ollama); Gemini, Mistral and
+OpenRouter free tiers are skipped.
+
+Vector search runs in memory by default. On Atlas, create a Vector Search index named
+`chunk_vectors` on the `chunkembeddings` collection with the definition in
+`apps/api/src/models/chunk-embedding.ts`, then set `VECTOR_SEARCH_ENABLED=true`. The worker
+downloads the embedding model (about 130 MB) the first time it embeds.
+
+`npm run eval:llm` runs a fixed question set through retrieval and the configured providers and
+scores citation hits, the no-evidence fallback and leaks of planted secrets or instructions.
+`npm run eval:llm -- --mock` checks the pipeline without keys.
+
 ## Scripts
 
 | Command                | What it does                                     |
 | ---------------------- | ------------------------------------------------ |
 | `npm run dev`          | Starts the API (4000) and the web app (5173)     |
+| `npm run eval:llm`     | Scores chat answers against the evaluation set   |
 | `npm run job:trending` | Rebuilds the trending lists once                 |
 | `npm run dev:worker`   | Starts the worker on port 8000                   |
 | `npm run lint`         | ESLint across the TypeScript packages            |

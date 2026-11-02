@@ -19,7 +19,7 @@ const signedOut = { error: { code: 'UNAUTHORIZED', message: 'Authentication requ
 const user = {
   id: 'u1',
   login: 'octocat',
-  preferences: { theme: 'system', privateRepoAccess: false },
+  preferences: { theme: 'system', privateRepoAccess: false, allowPrivateRepoLlm: false },
   privateRepoScope: false,
 };
 

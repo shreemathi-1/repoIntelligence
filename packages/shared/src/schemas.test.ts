@@ -40,6 +40,10 @@ describe('errorResponseSchema', () => {
 describe('preferencesUpdateSchema', () => {
   it('accepts a partial update', () => {
     expect(preferencesUpdateSchema.parse({ theme: 'dark' })).toEqual({ theme: 'dark' });
+    // A partial update must never fill in other preferences, or it would undo an opt-in.
+    expect(preferencesUpdateSchema.parse({ allowPrivateRepoLlm: true })).toEqual({
+      allowPrivateRepoLlm: true,
+    });
   });
 
   it('rejects an empty update and unknown keys', () => {

@@ -21,6 +21,10 @@ export class AppError extends Error {
     return new AppError(409, 'CONFLICT', message);
   }
 
+  static quotaExceeded(message: string, details?: unknown): AppError {
+    return new AppError(429, 'QUOTA_EXCEEDED', message, details);
+  }
+
   static unauthorized(message = 'Authentication required'): AppError {
     return new AppError(401, 'UNAUTHORIZED', message);
   }

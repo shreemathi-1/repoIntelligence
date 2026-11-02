@@ -209,3 +209,81 @@ export const JAVA_APP: FixtureRepo['files'] = {
 
 /** The oldest commit of a fixture repository. */
 export const firstSha = (repo: FixtureRepo): string => repo.commits[0] ?? '';
+
+export interface SignalOverrides {
+  commits?: number;
+  releases?: { published_at: string | null; draft: boolean }[];
+  contributors?: number[];
+  issues?: { number: number; created_at: string; comments: number; pull_request?: object }[];
+  comments?: { issue_url: string; created_at: string }[];
+  checkRuns?: { conclusion: string | null; status: string }[];
+  /** Status to answer for every signal endpoint, to simulate failures. */
+  failWith?: number;
+}
+
+/** Adds the endpoints the health analysis reads on top of `fixtureApi`. */
+export function withSignals(
+  repo: FixtureRepo,
+  over: SignalOverrides = {},
+): (url: string) => Response | undefined {
+  const base = fixtureApi(repo);
+  const prefix = `/repos/${repo.fullName}`;
+  return (url) => {
+    const { pathname, searchParams } = new URL(url);
+    if (!pathname.startsWith(prefix)) return base(url);
+    const rest = pathname.slice(prefix.length);
+    if (
+      over.failWith &&
+      /^\/(releases|contributors|issues|issues\/comments|commits\/[0-9a-f]{40}\/check-runs)$/.test(
+        rest,
+      )
+    ) {
+      return jsonResponse({ message: 'nope' }, over.failWith);
+    }
+    if (rest === '/commits' && searchParams.has('since')) {
+      return jsonResponse(Array.from({ length: over.commits ?? 12 }, (_, i) => ({ sha: `c${i}` })));
+    }
+    if (rest === '/releases')
+      return jsonResponse(
+        over.releases ?? [{ published_at: new Date().toISOString(), draft: false }],
+      );
+    if (rest === '/contributors') {
+      return jsonResponse(
+        (over.contributors ?? [60, 30, 10]).map((contributions, i) => ({
+          login: `u${i}`,
+          contributions,
+        })),
+      );
+    }
+    if (rest === '/issues/comments') {
+      return jsonResponse(
+        over.comments ?? [
+          {
+            issue_url: `https://api.github.com/repos/${repo.fullName}/issues/1`,
+            created_at: '2026-01-01T06:00:00Z',
+          },
+        ],
+      );
+    }
+    if (rest === '/issues') {
+      return jsonResponse(
+        over.issues ?? [
+          { number: 1, created_at: '2026-01-01T00:00:00Z', comments: 1 },
+          { number: 2, created_at: '2026-01-02T00:00:00Z', comments: 0 },
+        ],
+      );
+    }
+    if (/^\/commits\/[0-9a-f]{40}\/check-runs$/.test(rest)) {
+      return jsonResponse({
+        check_runs: over.checkRuns ?? [{ conclusion: 'success', status: 'completed' }],
+      });
+    }
+    if (rest.startsWith('/tarball/')) {
+      return new Response(new Uint8Array([0x1f, 0x8b, 8, 0, 1, 2, 3, 4]), {
+        status: 200,
+        headers: { 'content-type': 'application/x-gzip' },
+      });
+    }
+    return base(url);
+  };
+}

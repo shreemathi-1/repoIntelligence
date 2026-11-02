@@ -17,6 +17,7 @@ function toPublic(user: InstanceType<typeof User>): PublicUser {
       theme: prefs.theme,
       ...(prefs.defaultLanguage && { defaultLanguage: prefs.defaultLanguage }),
       privateRepoAccess: prefs.privateRepoAccess,
+      allowPrivateRepoLlm: prefs.allowPrivateRepoLlm,
     },
     privateRepoScope: user.tokenScopes.includes('repo'),
   };
