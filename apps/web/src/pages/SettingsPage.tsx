@@ -83,6 +83,23 @@ export function SettingsPage() {
               .
             </p>
           )}
+          <div className="space-y-1 border-t pt-3">
+            <p className="font-medium">Documentation pull requests</p>
+            {user.docsWriteScope ? (
+              <p className="text-muted-foreground">
+                Allowed. Pull requests are only opened when you confirm them, as drafts on a new
+                branch.
+              </p>
+            ) : (
+              <p className="text-muted-foreground">
+                Generated documentation can be proposed as a draft pull request. GitHub will ask you
+                to grant write access to your repositories.{' '}
+                <a className="underline" href={loginUrl(preferences.privateRepoAccess, true)}>
+                  Allow documentation pull requests
+                </a>
+              </p>
+            )}
+          </div>
           {update.isError && (
             <p role="alert" className="text-destructive">
               Could not save your settings.

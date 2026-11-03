@@ -4,6 +4,8 @@ export * from './artifact.js';
 export * from './chat-session.js';
 export * from './chunk-embedding.js';
 export * from './collection.js';
+export * from './doc-pull-request.js';
+export * from './generated-doc.js';
 export * from './github-cache.js';
 export * from './graph-run.js';
 export * from './ingestion-run.js';

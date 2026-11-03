@@ -6,6 +6,7 @@ import { AnalysisService } from '../analysis/service.js';
 import { WorkerClient } from '../analysis/worker-client.js';
 import { IngestionService } from '../ingest/service.js';
 import { DiscoveryService } from '../discovery/service.js';
+import { DocsService } from '../docs/service.js';
 import { providersFromEnv } from '../llm/adapters/index.js';
 import { LlmGateway } from '../llm/gateway.js';
 import { MongoUsageSink } from '../llm/usage-sink.js';
@@ -23,6 +24,7 @@ import { createAuthRouter } from './auth.js';
 import { createChatRepoRouter, createChatSessionRouter, createLlmUsageRouter } from './chat.js';
 import { createGraphRepoRouter, createGraphRunRouter } from './graph.js';
 import { createDiscoveryRouter } from './discovery.js';
+import { createDocQuotaRouter, createDocsRepoRouter, createDocsRouter } from './docs.js';
 import { createIngestRouter } from './ingest.js';
 import { createLibraryRouter } from './library.js';
 import { createMeRouter } from './me.js';
@@ -82,6 +84,7 @@ export function createApiRouter(config: Config, deps: AppDeps = {}): Router {
     }),
   });
   const indexer = new EmbeddingIndexer({ queue, worker, retriever });
+  const docs = new DocsService({ github, graphs, ingestion, gateway, fetch: deps.fetch });
   const chat = new ChatService({
     gateway,
     retriever,
@@ -98,6 +101,7 @@ export function createApiRouter(config: Config, deps: AppDeps = {}): Router {
   router.use('/me', guard, createLibraryRouter(config, discovery));
   router.use('/me', guard, createQuotaRouter(analysis));
   router.use('/me', guard, createLlmUsageRouter(chat));
+  router.use('/me', guard, createDocQuotaRouter(docs));
   router.use('/repos', maybe, createReposRouter(config, github));
   router.use('/repos', maybe, createIngestRouter(config, ingestion));
   router.use('/repos', maybe, createAnalysisRepoRouter(config, analysis));
@@ -106,6 +110,8 @@ export function createApiRouter(config: Config, deps: AppDeps = {}): Router {
   router.use('/graph-builds', maybe, createGraphRunRouter(graphs));
   router.use('/repos', maybe, createChatRepoRouter(config, chat, indexer));
   router.use('/chat/sessions', maybe, createChatSessionRouter(chat));
+  router.use('/repos', maybe, createDocsRepoRouter(config, docs));
+  router.use('/docs', maybe, createDocsRouter(config, docs));
   router.use(maybe, createDiscoveryRouter(config, discovery));
   return router;
 }

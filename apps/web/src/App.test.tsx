@@ -21,6 +21,7 @@ const user = {
   login: 'octocat',
   preferences: { theme: 'system', privateRepoAccess: false, allowPrivateRepoLlm: false },
   privateRepoScope: false,
+  docsWriteScope: false,
 };
 
 /** Routes fetch by path so the layout's /me call never hits the health mock. */

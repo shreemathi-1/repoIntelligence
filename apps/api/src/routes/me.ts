@@ -4,6 +4,7 @@ import {
   type MeResponse,
   type PublicUser,
 } from '@repointelligence/shared';
+import { canWrite } from '../auth/github-oauth.js';
 import { AppError } from '../errors.js';
 import { User } from '../models/user.js';
 
@@ -20,6 +21,7 @@ function toPublic(user: InstanceType<typeof User>): PublicUser {
       allowPrivateRepoLlm: prefs.allowPrivateRepoLlm,
     },
     privateRepoScope: user.tokenScopes.includes('repo'),
+    docsWriteScope: canWrite(user.tokenScopes, false),
   };
 }
 

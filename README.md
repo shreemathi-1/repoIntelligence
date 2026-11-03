@@ -126,6 +126,28 @@ downloads the embedding model (about 130 MB) the first time it embeds.
 scores citation hits, the no-evidence fallback and leaks of planted secrets or instructions.
 `npm run eval:llm -- --mock` checks the pipeline without keys.
 
+## Documentation generator
+
+From an ingested commit, signed-in users can generate a README, a setup guide, environment
+variable docs, an API reference, architecture and database schema docs, docstring suggestions, a
+contributing guide, troubleshooting, Mermaid sequence diagrams, a deployment guide and a
+changelog. Tables, commands, diagrams and lists are built from the repository files, the
+ingestion and the architecture map, each with a `path:lines` citation. A model only writes the
+explanations around them, in one call per document, and its citations are checked like chat
+answers. Without a model, or for a private repository without the opt-in, documents are built
+from facts alone. Sections the repository cannot support say so instead of being filled in.
+
+Documents are edited in place with a live preview (raw HTML is never rendered; Mermaid runs in
+strict mode) and export as Markdown, with links pinned to the commit or relative for committing,
+or as HTML. The panel also lists missing documentation, reviews a document with rule checks and
+a model score, and flags documents whose cited files changed in a newer ingested commit. Each
+user can generate 10 documents a day.
+
+Generated documents can be proposed as a draft pull request, only after the user confirms the
+exact files. This needs write access: Settings links to a fresh GitHub login asking for
+`public_repo` (or `repo` for private repositories). The pull request is a single commit on a new
+`repointelligence/docs-<sha>` branch; the default branch is never written to.
+
 ## Scripts
 
 | Command                | What it does                                     |

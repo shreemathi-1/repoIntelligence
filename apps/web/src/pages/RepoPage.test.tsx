@@ -53,6 +53,7 @@ const user = {
   login: 'octocat',
   preferences: { theme: 'system', privateRepoAccess: false, allowPrivateRepoLlm: false },
   privateRepoScope: false,
+  docsWriteScope: false,
 };
 
 const json = (body: unknown, status = 200): Response =>

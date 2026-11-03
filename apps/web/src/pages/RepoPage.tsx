@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { ChatPanel } from '@/components/chat/ChatPanel';
+import { DocsPanel } from '@/components/docs/DocsPanel';
 import { ArchitecturePanel } from '@/components/graph/ArchitecturePanel';
 import { HealthDashboard } from '@/components/health/HealthDashboard';
 import { IngestPanel } from '@/components/IngestPanel';
@@ -45,6 +46,7 @@ export function RepoPage() {
       <ChatPanel fullName={repo.fullName} />
       <HealthDashboard fullName={repo.fullName} />
       <ArchitecturePanel fullName={repo.fullName} />
+      <DocsPanel fullName={repo.fullName} />
       <IngestPanel fullName={repo.fullName} />
     </section>
   );

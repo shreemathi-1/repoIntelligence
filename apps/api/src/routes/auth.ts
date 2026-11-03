@@ -13,7 +13,11 @@ const STATE_COOKIE = 'ri_oauth_state';
 const STATE_MAX_AGE_MS = 10 * 60 * 1000;
 
 const callbackQuery = z.object({ code: z.string().min(1), state: z.string().min(1) });
-const loginQuery = z.object({ privateRepos: z.enum(['1', 'true']).optional() });
+const loginQuery = z.object({
+  privateRepos: z.enum(['1', 'true']).optional(),
+  // Asks for write access so documentation pull requests can be opened.
+  docsWrite: z.enum(['1', 'true']).optional(),
+});
 
 function sameValue(a: string, b: string): boolean {
   const left = Buffer.from(a);
@@ -32,10 +36,10 @@ export function createAuthRouter(config: Config, fetchImpl: typeof fetch): Route
 
   router.get('/github/login', (req, res) => {
     if (!auth) return;
-    const { privateRepos } = loginQuery.parse(req.query);
+    const { privateRepos, docsWrite } = loginQuery.parse(req.query);
     const state = randomBytes(24).toString('base64url');
     res.cookie(STATE_COOKIE, state, cookieOptions(isProduction, STATE_MAX_AGE_MS));
-    res.redirect(authorizeUrl(auth, state, privateRepos !== undefined));
+    res.redirect(authorizeUrl(auth, state, privateRepos !== undefined, docsWrite !== undefined));
   });
 
   router.get('/github/callback', async (req, res) => {

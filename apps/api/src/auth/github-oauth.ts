@@ -19,11 +19,30 @@ export interface GithubProfile {
   avatarUrl?: string;
 }
 
-export function authorizeUrl(auth: AuthConfig, state: string, privateRepos: boolean): string {
+/**
+ * The scopes to ask for. `repo` covers private repositories (and writing to them);
+ * `public_repo` only allows writing to public ones, for documentation pull requests.
+ */
+export function scopesFor(privateRepos: boolean, docsWrite = false): string {
+  if (privateRepos) return 'read:user repo';
+  return docsWrite ? 'read:user public_repo' : 'read:user';
+}
+
+/** Whether a token's scopes allow opening pull requests on a repository of this visibility. */
+export function canWrite(scopes: string[], privateRepo: boolean): boolean {
+  return scopes.includes('repo') || (!privateRepo && scopes.includes('public_repo'));
+}
+
+export function authorizeUrl(
+  auth: AuthConfig,
+  state: string,
+  privateRepos: boolean,
+  docsWrite = false,
+): string {
   const url = new URL('https://github.com/login/oauth/authorize');
   url.searchParams.set('client_id', auth.clientId);
   url.searchParams.set('redirect_uri', auth.callbackUrl);
-  url.searchParams.set('scope', privateRepos ? 'read:user repo' : 'read:user');
+  url.searchParams.set('scope', scopesFor(privateRepos, docsWrite));
   url.searchParams.set('state', state);
   return url.toString();
 }

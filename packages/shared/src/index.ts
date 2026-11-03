@@ -1,6 +1,7 @@
 export * from './analysis.js';
 export * from './chat.js';
 export * from './discovery.js';
+export * from './docs.js';
 export * from './error.js';
 export * from './graph.js';
 export * from './health.js';

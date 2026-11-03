@@ -25,6 +25,8 @@ export const publicUserSchema = z.object({
   preferences: preferencesSchema,
   // True when the stored token was granted the private repository scope.
   privateRepoScope: z.boolean(),
+  // True when the stored token may open pull requests on public repositories.
+  docsWriteScope: z.boolean(),
 });
 
 export type PublicUser = z.infer<typeof publicUserSchema>;

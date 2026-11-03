@@ -93,6 +93,16 @@ describe('GitHub login', () => {
     expect(new URL(locationOf(res)).searchParams.get('scope')).toBe('read:user repo');
   });
 
+  it('asks for public_repo only when documentation pull requests are enabled', async () => {
+    const app = createApp(authTestConfig, logger, { fetch: githubFetch() });
+    const scope = async (query: string) =>
+      new URL(
+        locationOf(await request(app).get(`/api/v1/auth/github/login${query}`)),
+      ).searchParams.get('scope');
+    expect(await scope('?docsWrite=1')).toBe('read:user public_repo');
+    expect(await scope('?docsWrite=1&privateRepos=1')).toBe('read:user repo');
+  });
+
   it('creates the user, encrypts the token and sets a session cookie', async () => {
     const { callback } = await signIn();
     expect(callback.status).toBe(302);

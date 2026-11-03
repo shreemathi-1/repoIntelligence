@@ -59,3 +59,35 @@ export async function treeDigestOf(
   }
   return hash.digest('hex');
 }
+
+/** Every file path in the commit, and whether GitHub cut the listing short. */
+export async function listTree(
+  github: GithubService,
+  owner: string,
+  name: string,
+  sha: string,
+  viewer?: Viewer,
+): Promise<{ paths: string[]; truncated: boolean }> {
+  const { data: commit } = await github.getJson(
+    {
+      route: 'GET /repos/{owner}/{repo}/commits/{ref}',
+      params: { owner, repo: name, ref: sha },
+      schema: commitSchema,
+      freshMs: IMMUTABLE_MS,
+    },
+    viewer,
+  );
+  const { data: tree } = await github.getJson(
+    {
+      route: 'GET /repos/{owner}/{repo}/git/trees/{tree_sha}',
+      params: { owner, repo: name, tree_sha: commit.commit.tree.sha, recursive: '1' },
+      schema: treeSchema,
+      freshMs: IMMUTABLE_MS,
+    },
+    viewer,
+  );
+  return {
+    paths: tree.tree.filter((e) => e.type === 'blob').map((e) => e.path),
+    truncated: tree.truncated,
+  };
+}

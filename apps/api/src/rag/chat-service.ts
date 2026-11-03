@@ -17,8 +17,8 @@ import type { LlmGateway } from '../llm/gateway.js';
 import { DATA_RULES, dataBlock } from '../llm/prompts.js';
 import { completeStructured } from '../llm/structured.js';
 import { ChatSession } from '../models/chat-session.js';
-import { IngestionRun } from '../models/ingestion-run.js';
-import { User } from '../models/user.js';
+import { isObjectId, latestReadableRun, requireModelConsent } from '../ingest/access.js';
+import type { IngestionRun } from '../models/ingestion-run.js';
 import { usageToday } from '../llm/usage-sink.js';
 import { answerQuestion } from './answer.js';
 import type { EmbeddingIndexer } from './index.js';
@@ -28,8 +28,6 @@ import { loadChunks, type HybridRetriever } from './retrieve.js';
 import { followUps, modelSuggestions } from './suggest.js';
 
 export const CHAT_QUOTA = { dailyQuestions: 50, maxSessionMessages: 200 } as const;
-
-const READY = ['completed', 'partial'] as const;
 
 export interface ChatServiceOptions {
   gateway: LlmGateway;
@@ -50,9 +48,6 @@ const explainSchema = z.object({
     .max(200),
 });
 
-const isObjectId = (id: string | undefined): id is string =>
-  id !== undefined && mongoose.isValidObjectId(id);
-
 export class ChatService {
   private readonly now: () => number;
 
@@ -63,32 +58,12 @@ export class ChatService {
   // ---- access ----------------------------------------------------------------------------------------
 
   /** The newest finished ingestion the caller may read; private runs belong to their owner. */
-  async latestRun(fullName: string, userId?: string, sha?: string): Promise<RunDoc | null> {
-    const query = IngestionRun.findOne({
-      fullName: fullName.toLowerCase(),
-      status: { $in: [...READY] },
-    });
-    if (sha) query.where({ sha: sha.toLowerCase() });
-    if (isObjectId(userId)) query.or([{ private: false }, { requestedBy: userId }]);
-    else query.where({ private: false });
-    return query.sort({ completedAt: -1 });
+  latestRun(fullName: string, userId?: string, sha?: string): Promise<RunDoc | null> {
+    return latestReadableRun(fullName, userId, sha);
   }
 
-  /**
-   * Whether this run's content may go to a model, and under which rule. Private content needs
-   * the user's opt-in and is then only routed to providers that do not train on inputs.
-   */
-  private async privacyOf(run: RunDoc, userId: string): Promise<boolean> {
-    if (!run.private) return false;
-    const user = await User.findById(userId);
-    if (!user?.preferences.allowPrivateRepoLlm) {
-      throw new AppError(
-        403,
-        'PRIVATE_LLM_OPT_IN',
-        'Chat about private repositories is off. Turn it on in Settings to send this repository to model providers that do not train on inputs.',
-      );
-    }
-    return true;
+  private privacyOf(run: RunDoc, userId: string): Promise<boolean> {
+    return requireModelConsent(run, userId);
   }
 
   async status(fullName: string, userId?: string): Promise<ChatStatus> {
