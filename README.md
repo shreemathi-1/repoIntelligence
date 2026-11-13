@@ -192,6 +192,28 @@ shared 10 generations a day. Alternatives are similar repositories from GitHub s
 the same license and runtime rules. Anonymous visitors can evaluate with a one-off stack; nothing
 is stored for them.
 
+## Onboarding and implementation planner
+
+**Get started** builds a walkthrough of a repository from its latest ingestion and architecture
+graph: what it is and how it is laid out, where execution starts, prerequisites, install and run
+commands taken from the lockfiles, manifests and scripts that are actually there, likely first-run
+problems, the files to read first, and a learning roadmap sized to the repository with a beginner
+and an advanced mode. Starter issues combine the maintainers' open "good first issue" items with
+small gaps found in the files (untested files, undocumented exports, TODO comments, documentation
+slips). Nothing in it is written by a model, every step links to the file it came from, and
+signed-in users keep their progress.
+
+**Plan a feature** turns a goal into an ordered list of tasks. A model proposes the tasks from
+the files most related to the goal; the server then checks the proposal against the ingested
+commit. A file to change must exist, a new file must sit in a directory that exists, and anything
+else is removed and counted. Task order comes from the import graph, named routes and models are
+matched against the detected ones, each task gets the test file to extend or the path a new one
+would take, and effort and risk come from fixed rules over file size, dependants, test coverage
+and what the task touches. Without a model, or for a private repository without the opt-in, the
+plan lists the relevant files in order with their risk and no task text. Plans keep their
+progress, export as Markdown or as a checklist to paste into a GitHub issue, and count toward the
+shared 10 generations a day; each user can keep 20 plans per repository.
+
 ## Scripts
 
 | Command                | What it does                                     |

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { errorResponseSchema, healthResponseSchema, preferencesUpdateSchema } from './index.js';
+import {
+  errorResponseSchema,
+  healthResponseSchema,
+  planRequestSchema,
+  planTaskSchema,
+  preferencesUpdateSchema,
+} from './index.js';
 
 const validHealth = {
   status: 'ok',
@@ -50,4 +56,16 @@ describe('preferencesUpdateSchema', () => {
     expect(preferencesUpdateSchema.safeParse({}).success).toBe(false);
     expect(preferencesUpdateSchema.safeParse({ role: 'admin' }).success).toBe(false);
   });
+});
+
+describe('planner schemas', () => {
+  it('bounds the goal and requires a file on every task', () => {
+    expect(planRequestSchema.safeParse({ goal: 'too short' }).success).toBe(false);
+    expect(planRequestSchema.safeParse({ goal: 'Add CSV export to the orders list' }).success).toBe(true);
+    const task = {
+      id: 't1', order: 1, title: 'x', description: null, files: [], dependsOn: [], api: [], database: [], tests: [],
+      risk: { level: 'low', reasons: [] }, effort: { low: 1, high: 2 }, done: false,
+    };
+    expect(planTaskSchema.safeParse(task).success).toBe(false);
+  }); // prettier-ignore
 });

@@ -8,5 +8,6 @@ export * from './evolution.js';
 export * from './graph.js';
 export * from './health.js';
 export * from './ingest.js';
+export * from './planner.js';
 export * from './repo.js';
 export * from './user.js';

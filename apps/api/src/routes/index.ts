@@ -12,6 +12,7 @@ import { EvolutionService } from '../evolution/service.js';
 import { providersFromEnv } from '../llm/adapters/index.js';
 import { LlmGateway } from '../llm/gateway.js';
 import { MongoUsageSink } from '../llm/usage-sink.js';
+import { PlannerService } from '../planner/service.js';
 import { ChatService } from '../rag/chat-service.js';
 import { EmbeddingIndexer } from '../rag/index.js';
 import { HybridRetriever } from '../rag/retrieve.js';
@@ -36,6 +37,7 @@ import { createEvolutionRouter } from './evolution.js';
 import { createIngestRouter } from './ingest.js';
 import { createLibraryRouter } from './library.js';
 import { createMeRouter } from './me.js';
+import { createPlanRouter, createPlannerRepoRouter } from './planner.js';
 import { createReposRouter } from './repos.js';
 
 export interface AppDeps {
@@ -101,6 +103,7 @@ export function createApiRouter(config: Config, deps: AppDeps = {}): Router {
     ...(deps.sleep && { sleep: deps.sleep }),
   });
   const adaptability = new AdaptabilityService({ github, graphs, ingestion, discovery, gateway });
+  const planner = new PlannerService({ github, graphs, ingestion, discovery, gateway, retriever });
   const chat = new ChatService({
     gateway,
     retriever,
@@ -132,6 +135,8 @@ export function createApiRouter(config: Config, deps: AppDeps = {}): Router {
   router.use('/me', guard, createStackProfileRouter(adaptability));
   router.use('/repos', maybe, createAdaptabilityRepoRouter(config, adaptability));
   router.use('/adaptability', maybe, createAdaptabilityRouter(adaptability));
+  router.use('/repos', maybe, createPlannerRepoRouter(config, planner));
+  router.use('/plans', guard, createPlanRouter(planner));
   router.use(maybe, createDiscoveryRouter(config, discovery));
   return router;
 }

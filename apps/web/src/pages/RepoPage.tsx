@@ -17,6 +17,13 @@ const AdaptabilityPanel = lazy(() =>
   })),
 );
 
+const OnboardingPanel = lazy(() =>
+  import('@/components/planner/OnboardingPanel').then((m) => ({ default: m.OnboardingPanel })),
+);
+const PlannerPanel = lazy(() =>
+  import('@/components/planner/PlannerPanel').then((m) => ({ default: m.PlannerPanel })),
+);
+
 export function RepoPage() {
   const { owner = '', name = '' } = useParams();
   const fullName = `${owner}/${name}`;
@@ -58,6 +65,8 @@ export function RepoPage() {
       <EvolutionPanel fullName={repo.fullName} />
       <Suspense fallback={null}>
         <AdaptabilityPanel fullName={repo.fullName} />
+        <OnboardingPanel fullName={repo.fullName} />
+        <PlannerPanel fullName={repo.fullName} />
       </Suspense>
       <DocsPanel fullName={repo.fullName} />
       <IngestPanel fullName={repo.fullName} />

@@ -6,12 +6,10 @@ import {
   type RepoCard,
   type StackProfileInput,
 } from '@repointelligence/shared';
-import { ORDERS_SERVICE } from '../../test/fixtures/docs.js';
-import { fixtureGraph } from '../../test/fixtures/graph.js';
+import { FACTS_SHA, factsOf, ordersFiles } from '../../test/fixtures/facts.js';
 import { FakeProvider } from '../../test/fixtures/llm.js';
 import { classifyLicense } from '../discovery/license.js';
 import type { Facts } from '../docs/facts.js';
-import { parseEnvExample, parseManifest } from '../ingest/manifests.js';
 import { LlmGateway } from '../llm/gateway.js';
 import { pickAlternatives } from './alternatives.js';
 import { licenseVerdict } from './checks/policy.js';
@@ -21,28 +19,9 @@ import { evidenceLink, toMarkdown } from './report.js';
 import { detect } from './requirements.js';
 import { majorOf, overlaps, satisfies, toRange } from './versions.js';
 
-const SHA = 'a'.repeat(40);
+const SHA = FACTS_SHA;
 const MIT = classifyLicense('MIT');
-
-/** The slice of an ingestion the collector reads, built from plain files. */
-function factsOf(files: Record<string, string>, graph: Facts['graph'] = fixtureGraph()): Facts {
-  const manifests = Object.entries(files).flatMap(([path, text]) => parseManifest(text, path) ?? []);
-  const envExamples = Object.entries(files)
-    .filter(([path]) => path.endsWith('.env.example'))
-    .map(([path, text]) => ({ path, vars: parseEnvExample(text) }));
-  return {
-    fullName: 'acme/orders', owner: 'acme', name: 'orders', sha: SHA, private: false,
-    repo: { fullName: 'acme/orders', description: null, private: false, defaultBranch: 'main', language: 'TypeScript', stars: 1, htmlUrl: 'https://github.com/acme/orders' },
-    data: { repo: 'acme/orders', sha: SHA, ref: 'main', generatedAt: '', docs: [], openApi: [], manifests, envExamples, symbols: [], findings: [], missingDocuments: [], chunks: [] },
-    graph,
-    paths: Object.keys(files),
-    read: (path) => Promise.resolve(files[path] ?? null),
-  };
-} // prettier-ignore
-
-const orders = Object.fromEntries(
-  Object.entries(ORDERS_SERVICE).map(([path, content]) => [path, content.toString()]),
-);
+const orders = ordersFiles;
 const profile = (over: Partial<StackProfileInput>): StackProfileInput =>
   stackProfileInputSchema.parse({ name: 'test', ...over });
 
