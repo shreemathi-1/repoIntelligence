@@ -6,6 +6,7 @@ import { AnalysisService } from '../analysis/service.js';
 import { WorkerClient } from '../analysis/worker-client.js';
 import { IngestionService } from '../ingest/service.js';
 import { DiscoveryService } from '../discovery/service.js';
+import { AdaptabilityService } from '../adaptability/service.js';
 import { DocsService } from '../docs/service.js';
 import { EvolutionService } from '../evolution/service.js';
 import { providersFromEnv } from '../llm/adapters/index.js';
@@ -16,6 +17,11 @@ import { EmbeddingIndexer } from '../rag/index.js';
 import { HybridRetriever } from '../rag/retrieve.js';
 import { GithubService } from '../github/service.js';
 import { optionalAuth, requireAuth } from '../middleware/require-auth.js';
+import {
+  createAdaptabilityRepoRouter,
+  createAdaptabilityRouter,
+  createStackProfileRouter,
+} from './adaptability.js';
 import {
   createAnalysisRepoRouter,
   createAnalysisRunRouter,
@@ -94,6 +100,7 @@ export function createApiRouter(config: Config, deps: AppDeps = {}): Router {
     gateway,
     ...(deps.sleep && { sleep: deps.sleep }),
   });
+  const adaptability = new AdaptabilityService({ github, graphs, ingestion, discovery, gateway });
   const chat = new ChatService({
     gateway,
     retriever,
@@ -122,6 +129,9 @@ export function createApiRouter(config: Config, deps: AppDeps = {}): Router {
   router.use('/repos', maybe, createDocsRepoRouter(config, docs));
   router.use('/docs', maybe, createDocsRouter(config, docs));
   router.use('/repos', maybe, createEvolutionRouter(config, evolution));
+  router.use('/me', guard, createStackProfileRouter(adaptability));
+  router.use('/repos', maybe, createAdaptabilityRepoRouter(config, adaptability));
+  router.use('/adaptability', maybe, createAdaptabilityRouter(adaptability));
   router.use(maybe, createDiscoveryRouter(config, discovery));
   return router;
 }

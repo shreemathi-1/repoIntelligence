@@ -166,6 +166,32 @@ statistics GitHub is still computing are reported as pending. Anonymous visitors
 repositories; release summaries need sign-in and count toward the same 10 generations a day as
 documents.
 
+## Adaptability evaluation
+
+The Adaptability panel compares a repository with your own stack. You describe the stack in a
+short questionnaire (runtime versions, frameworks, databases, authentication, operating systems,
+deployment target, infrastructure, license policy, and optionally your dependencies pasted from a
+manifest), and the evaluation reads the repository's requirements from its latest ingestion, its
+architecture graph when one exists, and a few files at the same commit.
+
+Ten dimensions are scored by fixed rules: language and runtime, framework, dependencies, license,
+database and migrations, authentication, external services, infrastructure and deployment,
+operating system and configuration. Version checks use semver ranges, with small converters for
+Python, Go and Java; anything that cannot be compared is reported as unknown and left out of the
+overall score, never counted as compatible or as zero. Every warning carries evidence: a file and
+line at the evaluated commit, a detection from the graph, a fact from GitHub, or the answer in
+your profile it was compared with. The report also gives the breaking-change risk, missing
+infrastructure, setup complexity, an effort range built from fixed hours per required change, the
+changes themselves, and a checklist to work through. License results are rule-based guidance, not
+legal advice.
+
+Signed-in users can save up to five stacks, keep reports with their checklist progress, export
+the integration readiness report as Markdown, HTML or JSON, and ask a model to explain the
+results; that explanation is stored and shown apart from the rule results and counts toward the
+shared 10 generations a day. Alternatives are similar repositories from GitHub search that pass
+the same license and runtime rules. Anonymous visitors can evaluate with a one-off stack; nothing
+is stored for them.
+
 ## Scripts
 
 | Command                | What it does                                     |

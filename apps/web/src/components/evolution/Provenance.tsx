@@ -38,10 +38,17 @@ export function FactsSource({ sources, retrievedAt, notes }: FactsProps) {
 interface InterpretationProps {
   interpretation: Interpretation | null;
   note: string | null;
+  highlightsLabel?: string;
+  risksLabel?: string;
 }
 
 /** A model's reading of the facts, set apart from them and labelled with the model's name. */
-export function InterpretationBox({ interpretation, note }: InterpretationProps) {
+export function InterpretationBox({
+  interpretation,
+  note,
+  highlightsLabel = 'Highlights',
+  risksLabel = 'Upgrade risks',
+}: InterpretationProps) {
   if (!interpretation) {
     return note ? <p className="text-muted-foreground text-sm">{note}</p> : null;
   }
@@ -62,7 +69,7 @@ export function InterpretationBox({ interpretation, note }: InterpretationProps)
       <p>{interpretation.summary}</p>
       {interpretation.highlights.length > 0 && (
         <div>
-          <p className="font-medium">Highlights</p>
+          <p className="font-medium">{highlightsLabel}</p>
           <ul className="list-disc pl-5">
             {interpretation.highlights.map((h) => (
               <li key={h}>{h}</li>
@@ -72,7 +79,7 @@ export function InterpretationBox({ interpretation, note }: InterpretationProps)
       )}
       {interpretation.risks.length > 0 && (
         <div>
-          <p className="font-medium">Upgrade risks</p>
+          <p className="font-medium">{risksLabel}</p>
           <ul className="list-disc pl-5">
             {interpretation.risks.map((r) => (
               <li key={r}>{r}</li>

@@ -1,3 +1,4 @@
+export * from './adaptability.js';
 export * from './analysis.js';
 export * from './chat.js';
 export * from './discovery.js';

@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ChatPanel } from '@/components/chat/ChatPanel';
 import { DocsPanel } from '@/components/docs/DocsPanel';
@@ -8,6 +9,13 @@ import { IngestPanel } from '@/components/IngestPanel';
 import { Badge } from '@/components/ui/badge';
 import { useRepo } from '@/hooks/use-ingest';
 import { ApiError } from '@/lib/api-client';
+
+// The questionnaire and report are only needed once someone scrolls to them.
+const AdaptabilityPanel = lazy(() =>
+  import('@/components/adaptability/AdaptabilityPanel').then((m) => ({
+    default: m.AdaptabilityPanel,
+  })),
+);
 
 export function RepoPage() {
   const { owner = '', name = '' } = useParams();
@@ -48,6 +56,9 @@ export function RepoPage() {
       <HealthDashboard fullName={repo.fullName} />
       <ArchitecturePanel fullName={repo.fullName} />
       <EvolutionPanel fullName={repo.fullName} />
+      <Suspense fallback={null}>
+        <AdaptabilityPanel fullName={repo.fullName} />
+      </Suspense>
       <DocsPanel fullName={repo.fullName} />
       <IngestPanel fullName={repo.fullName} />
     </section>

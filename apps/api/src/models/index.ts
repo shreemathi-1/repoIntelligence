@@ -1,3 +1,4 @@
+export * from './adaptability-report.js';
 export * from './analysis-run.js';
 export * from './architecture-graph.js';
 export * from './artifact.js';
@@ -16,6 +17,7 @@ export * from './repository.js';
 export * from './user.js';
 export * from './saved-repository.js';
 export * from './scan-cache.js';
+export * from './stack-profile.js';
 export * from './search-history.js';
 export * from './trending-snapshot.js';
 export * from './watch.js';
