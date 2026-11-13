@@ -36,10 +36,11 @@ import { apiDoc, databaseDoc, docstringsDoc, envDoc } from './generators/referen
 import { findMissingDocs } from './missing.js';
 import type { GenerateOptions, Generator } from './plan.js';
 import { DocsPullRequestWriter } from './pull-request.js';
+import { DOC_QUOTA, generationsToday } from './quota.js';
 import { linkCitations, toHtml, type LinkMode } from './render.js';
 import { reviewDoc } from './review.js';
 
-export const DOC_QUOTA = { dailyGenerations: 10 } as const;
+export { DOC_QUOTA };
 
 const STATIC: Record<Exclude<DocKind, 'changelog'>, Generator> = {
   readme: readmeDoc,
@@ -95,10 +96,8 @@ export class DocsService {
     return loadFacts(this.options, run, viewer);
   }
 
-  private async generationsToday(userId: string): Promise<number> {
-    const dayStart = new Date(this.now());
-    dayStart.setUTCHours(0, 0, 0, 0);
-    return GeneratedDoc.countDocuments({ createdBy: userId, generatedAt: { $gte: dayStart } });
+  private generationsToday(userId: string): Promise<number> {
+    return generationsToday(userId, this.now());
   }
 
   async quota(userId: string): Promise<DocQuota> {

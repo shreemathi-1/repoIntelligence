@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 import { jsonResponse, repoJson } from '../../test/github-fixtures.js';
 import { useMemoryDb } from '../../test/db.js';
 import { GithubCache } from '../models/github-cache.js';
@@ -125,5 +126,40 @@ describe('GithubService.getRepo', () => {
     await expect(service(fetchMock).getRepo('acme', 'tool')).rejects.toMatchObject({
       code: 'UPSTREAM_ERROR',
     });
+  });
+});
+
+describe('GithubService.getJson', () => {
+  it('caches each parsed shape of the same response separately', async () => {
+    const fetchMock = mockFetch(
+      jsonResponse({ ...repoJson, forks_count: 9 }),
+      jsonResponse({ ...repoJson, forks_count: 9 }),
+    );
+    const github = service(fetchMock);
+    await github.getRepo('acme', 'tool');
+    const counts = await github.getJson({
+      route: 'GET /repos/{owner}/{repo}',
+      params: { owner: 'acme', repo: 'tool' },
+      schema: z.object({ forks_count: z.number() }),
+    });
+    expect(counts).toEqual({ data: { forks_count: 9 }, source: 'network' });
+    expect((await github.getRepo('acme', 'tool')).source).toBe('cache');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('sends a requested media type and keeps it apart in the cache', async () => {
+    const fetchMock = mockFetch(jsonResponse([{ starred_at: '2026-01-01T00:00:00Z' }]));
+    const { data } = await service(fetchMock).getJson({
+      route: 'GET /repos/{owner}/{repo}/stargazers',
+      params: { owner: 'acme', repo: 'tool' },
+      schema: z.array(z.object({ starred_at: z.string() })),
+      accept: 'application/vnd.github.star+json',
+    });
+    expect(data).toHaveLength(1);
+    expect(new Headers(fetchMock.mock.calls[0]?.[1]?.headers).get('accept')).toBe(
+      'application/vnd.github.star+json',
+    );
+    const entry = await GithubCache.findOne().lean();
+    expect(entry?.key).toContain('application/vnd.github.star+json');
   });
 });

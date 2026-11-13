@@ -7,6 +7,7 @@ import { WorkerClient } from '../analysis/worker-client.js';
 import { IngestionService } from '../ingest/service.js';
 import { DiscoveryService } from '../discovery/service.js';
 import { DocsService } from '../docs/service.js';
+import { EvolutionService } from '../evolution/service.js';
 import { providersFromEnv } from '../llm/adapters/index.js';
 import { LlmGateway } from '../llm/gateway.js';
 import { MongoUsageSink } from '../llm/usage-sink.js';
@@ -25,6 +26,7 @@ import { createChatRepoRouter, createChatSessionRouter, createLlmUsageRouter } f
 import { createGraphRepoRouter, createGraphRunRouter } from './graph.js';
 import { createDiscoveryRouter } from './discovery.js';
 import { createDocQuotaRouter, createDocsRepoRouter, createDocsRouter } from './docs.js';
+import { createEvolutionRouter } from './evolution.js';
 import { createIngestRouter } from './ingest.js';
 import { createLibraryRouter } from './library.js';
 import { createMeRouter } from './me.js';
@@ -42,6 +44,8 @@ export interface AppDeps {
   graphs?: GraphService;
   /** The model gateway. Without one, adapters are built from the provider keys in the config. */
   llm?: LlmGateway;
+  /** Tests replace the wait between GitHub's "still computing" answers. */
+  sleep?: (ms: number) => Promise<void>;
 }
 
 export function createApiRouter(config: Config, deps: AppDeps = {}): Router {
@@ -85,6 +89,11 @@ export function createApiRouter(config: Config, deps: AppDeps = {}): Router {
   });
   const indexer = new EmbeddingIndexer({ queue, worker, retriever });
   const docs = new DocsService({ github, graphs, ingestion, gateway, fetch: deps.fetch });
+  const evolution = new EvolutionService({
+    github,
+    gateway,
+    ...(deps.sleep && { sleep: deps.sleep }),
+  });
   const chat = new ChatService({
     gateway,
     retriever,
@@ -112,6 +121,7 @@ export function createApiRouter(config: Config, deps: AppDeps = {}): Router {
   router.use('/chat/sessions', maybe, createChatSessionRouter(chat));
   router.use('/repos', maybe, createDocsRepoRouter(config, docs));
   router.use('/docs', maybe, createDocsRouter(config, docs));
+  router.use('/repos', maybe, createEvolutionRouter(config, evolution));
   router.use(maybe, createDiscoveryRouter(config, discovery));
   return router;
 }

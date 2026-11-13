@@ -3,6 +3,7 @@ export * from './chat.js';
 export * from './discovery.js';
 export * from './docs.js';
 export * from './error.js';
+export * from './evolution.js';
 export * from './graph.js';
 export * from './health.js';
 export * from './ingest.js';

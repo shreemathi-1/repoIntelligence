@@ -283,7 +283,7 @@ describe('Health dashboard', () => {
   });
 
   it('draws history once there are two runs', async () => {
-    const item = (runId: string, overall: number, day: string) => ({
+    const item = (runId: string, overall: number | null, day: string) => ({
       runId,
       sha: SHA,
       finishedAt: `2026-03-${day}T00:00:00.000Z`,
@@ -295,10 +295,17 @@ describe('Health dashboard', () => {
       [`GET ${base}`]: () => json(repo),
       [`GET ${base}/health`]: () => json(run()),
       [`GET ${base}/health/history`]: () =>
-        json({ items: [item('r2', 72, '02'), item('r1', 60, '01')] }),
+        json({ items: [item('r3', 72, '03'), item('r2', null, '02'), item('r1', 60, '01')] }),
     });
     renderRepo();
-    expect(await screen.findByRole('img', { name: 'Score history: 60, 72' })).toBeVisible();
+    // The chart is loaded on demand, which can take a moment the first time.
+    const chart = await screen.findByRole('figure', { name: 'Score history' }, { timeout: 5000 });
+    const cells = within(chart)
+      .getAllByRole('row')
+      .slice(1)
+      .map((r) => r.textContent);
+    // Oldest first, and a run without a score is a gap rather than a zero.
+    expect(cells).toEqual(['Mar 160', 'Mar 2no data', 'Mar 372']);
   });
 
   it('shows the server message when the analysis cannot start', async () => {
@@ -316,6 +323,6 @@ describe('Health dashboard', () => {
     });
     renderRepo();
     await userEvent.click(await screen.findByRole('button', { name: 'Analyse repository' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent(/today's 5 analyses/);
+    expect(await screen.findByText(/today's 5 analyses/)).toBeVisible();
   });
 });

@@ -216,7 +216,7 @@ describe('Repository page', () => {
     });
     renderRepo();
     await userEvent.click(await screen.findByRole('button', { name: 'Ingest repository' }));
-    expect(await screen.findByRole('alert')).toHaveTextContent(/rate limit reached/i);
+    expect(await screen.findByText(/rate limit reached/i)).toBeVisible();
   });
 
   it('says so when the repository does not exist', async () => {

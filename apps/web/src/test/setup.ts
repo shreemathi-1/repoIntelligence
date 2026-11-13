@@ -17,3 +17,11 @@ Object.defineProperty(window, 'matchMedia', {
     removeEventListener: () => undefined,
   }),
 });
+
+// jsdom has no ResizeObserver, which responsive charts use to measure their container.
+class NoopResizeObserver {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+Object.defineProperty(window, 'ResizeObserver', { writable: true, value: NoopResizeObserver });

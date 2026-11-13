@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Octokit, RequestError } from 'octokit';
 import { z } from 'zod';
 import type { RepoResponse, RepoSummary } from '@repointelligence/shared';
@@ -33,6 +34,8 @@ export interface JsonRequest<T> {
   freshMs?: number;
   /** Set false for large, immutable bodies the caller stores itself (for example blobs). */
   cache?: boolean;
+  /** A media type that changes the body, such as `application/vnd.github.star+json`. */
+  accept?: string;
 }
 
 /** GitHub answered 202: it is still computing statistics. Nothing is cached. */
@@ -65,6 +68,26 @@ const repoSummarySchema = repoSchema.transform((raw): RepoSummary => ({
   stars: raw.stargazers_count,
   htmlUrl: raw.html_url,
 }));
+
+const shapes = new WeakMap<z.ZodType, string>();
+
+/**
+ * A short fingerprint of the fields a schema reads. The cache keeps parsed bodies, so two
+ * callers that read the same response with different schemas must not share an entry.
+ */
+function shapeOf(schema: z.ZodType): string {
+  let id = shapes.get(schema);
+  if (id === undefined) {
+    try {
+      const json = JSON.stringify(z.toJSONSchema(schema, { io: 'input', unrepresentable: 'any' }));
+      id = createHash('sha1').update(json).digest('hex').slice(0, 12);
+    } catch {
+      id = 'any';
+    }
+    shapes.set(schema, id);
+  }
+  return id;
+}
 
 function stableParams(params: Record<string, ParamValue>): string {
   return Object.keys(params)
@@ -113,7 +136,9 @@ export class GithubService {
   ): Promise<{ data: T; source: CacheSource }> {
     const params = request.params ?? {};
     const scope = viewer ? `user:${viewer.userId}` : 'public';
-    const key = `${scope}|${request.route}|${stableParams(params)}`.toLowerCase();
+    const media = request.accept ? `|${request.accept}` : '';
+    const shape = `#${shapeOf(request.schema)}`;
+    const key = `${scope}|${request.route}|${stableParams(params)}${media}${shape}`.toLowerCase();
     const freshMs = request.freshMs ?? this.freshMs;
     const useCache = request.cache !== false;
     const cached = useCache ? await GithubCache.findOne({ key }).lean() : null;
@@ -137,7 +162,10 @@ export class GithubService {
       try {
         const response = await octokit.request(request.route, {
           ...params,
-          headers: cached?.etag ? { 'if-none-match': cached.etag } : {},
+          headers: {
+            ...(request.accept && { accept: request.accept }),
+            ...(cached?.etag && { 'if-none-match': cached.etag }),
+          },
         });
         if (response.status === 202) throw new GithubPendingError();
         const raw: unknown = response.data;

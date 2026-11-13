@@ -148,6 +148,24 @@ exact files. This needs write access: Settings links to a fresh GitHub login ask
 `public_repo` (or `repo` for private repositories). The pull request is a single commit on a new
 `repointelligence/docs-<sha>` branch; the default branch is never written to.
 
+## Evolution analytics
+
+The Evolution panel on a repository page charts how the project has changed: weekly commits,
+lines added and removed, active and new contributors, pull request and issue trends with median
+time to merge and close, star growth, releases and their cadence, recent commits grouped by
+Conventional Commits type, and a comparison of any two branches, tags or commits (files by
+directory and declared dependency changes with semver level). Quality history comes from stored
+analyses: health and debt over time, regressions (an overall or area drop of 10 points or more,
+findings up 20% or more, or a new import cycle or layer violation), a side-by-side comparison of
+any two analyses, language share and architecture changes between stored graphs.
+
+Every response keeps retrieved facts and model text apart: `facts` holds only what GitHub
+returned or what was counted from it, and `interpretation` is filled only by release summaries.
+The interface labels them differently. Missing data is shown as a gap, never as zero, and
+statistics GitHub is still computing are reported as pending. Anonymous visitors can read public
+repositories; release summaries need sign-in and count toward the same 10 generations a day as
+documents.
+
 ## Scripts
 
 | Command                | What it does                                     |
